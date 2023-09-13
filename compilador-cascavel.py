@@ -2,48 +2,53 @@ import sys
 import json
 
 
-arquivo_base = sys.argv[1]
+# arquivo_base = sys.argv[1]
 
-with open(arquivo_base,"r") as file_json:
-   dados_ast = json.load(file_json)
-
-
-node = dados_ast["expression"]
-
-
-memoria = {}
-
-
-def intepretador(file):
-   match file["kind"]:
-      case "Print":
-         valor = file.get("value").get("kind")
-         if valor == "Binary":
-            operacao = file["value"]["op"]
-            match operacao:
-               case "Add":
-                  r = file["value"]["rhs"]["value"] 
-                  l = file["value"]["lhs"]["value"]
-                  if isinstance(r,(float,int)) and  isinstance(l,(float,int)):
-                     print(r + l)
-                  print(f"'{str(r) + str(l)}'")
-               case "Sub":
-                  r = file["value"]["rhs"]["value"]
-                  l = file["value"]["lhs"]["value"]
-                  print(l - r)  
-
-               case _:
-                  print("Opeaçaõ invalidade")
-         else:
-            print(file["value"]["value"])
-      case "Let":
-         print("Definir uma variavel")
-         var = file["name"]["text"]
-         memoria[var] = var
-         ...
-   # print(file)
+def ler_arvore():
+   with open("exemplos/imprimir.json","r") as file_json:
+      dados_ast = json.load(file_json)
+   return dados_ast
 
 
 
-intepretador(node)
-print(memoria)
+arvore = ler_arvore()
+
+def interpretador(node, memoria):
+
+   if "expression" in node:
+      return interpretador(node["expression"],memoria)
+      
+   if node["kind"] == "Print":
+         valor = interpretador(node["value"],memoria)
+         print(valor)
+         return True
+   
+   if node["kind"] == "Binary":
+      n1 = node["lhs"]["value"]
+      n2 = node["rhs"]["value"]
+      match node["op"]:
+         case "Add":           
+            if isinstance(n1,(int,float)) and isinstance(n2,(int,float)):
+               print(n1 + n2)
+            print(f'"{str(n1)}'+f'{str(n2)}"')
+      
+      return True
+   
+   
+   
+   #  TIPOS DA LINGUAGEM
+   if node["kind"] == "Str":
+      return str(node["value"])
+   
+   if node["kind"] == "Int":
+      return int(node["value"])
+
+   
+   
+   raise Exception("")
+   
+   
+   
+if __name__ == "__main__":
+   env= {}
+   interpretador(arvore,env)
